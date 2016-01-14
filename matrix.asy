@@ -1,3 +1,4 @@
+import geometry;                // for mass calculation
 import object;
 
 struct MatrixShape {
@@ -239,6 +240,24 @@ struct Matrix {
     else
       assert(false, 'Not supported yet');
   }
+  void tileRow(explicit int size) {
+    assert(!isBand(), 'Row tiling of band matrix is not supported');
+    if (isGeneral())
+      tileRowGeneral(size);
+    else if (isSquare())
+      tileRowSquare(size);
+    else
+      assert(false, 'Not supported yet');
+  }
+  void tileCol(explicit int size) {
+    assert(!isBand(), 'Col tiling of band matrix is not supported');
+    if (isGeneral())
+      tileColGeneral(size);
+    else if (isSquare())
+      tileColSquare(size);
+    else
+      assert(false, 'Not supported yet');
+  }
 
   private void tileDiagonalSquare() {
     _submatrices = new Matrix[2];
@@ -292,7 +311,7 @@ struct Matrix {
     if (isUp())
       g = (0, 0)--(1, 0)--(1, -1)--cycle;
     else
-      g = (0, 0)--(0, -1)--(1, 1)--cycle;
+      g = (0, 0)--(0, -1)--(1, -1)--cycle;
     return shift(_base)*scale(_row)*g;
   }
   private guide toGuideTrapezoidal() {
@@ -318,6 +337,19 @@ struct Matrix {
       assert(false, 'Not supported yet');
       return nullpath;
     }
+  }
+  pair masscenter() {
+    // static pair[] pointcollector(guide) = new pair[] (path p) {
+    //   pair[] points = new pair[size(p)];
+    //   for (int i = 0; i < size(p); ++i)
+    //     points[i] = point(p, i);
+    //   return points;
+    // }
+    guide g = toGuide();
+    mass mc = point(g, 0);
+    for (int i = 1; i < size(g); ++i)
+      mc = masscenter(mc, point(g, i));
+    return (point)mc;
   }
   private Object render() {
     guide g = toGuide();
