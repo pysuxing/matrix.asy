@@ -2,12 +2,14 @@ struct Object {
   // members
   private path _path;
   private guide _guide;
+  private Label _label;
   private pen _pen;
   private Object[] _children;
   // constructors
   void operator init() {
     this._path = nullpath;
     this._guide = nullpath;
+    this._label = new Label;
     this._pen = defaultpen;
     this._children = new Object[];
   }
@@ -15,6 +17,7 @@ struct Object {
                      Object[] children = new Object[]) {
     this._path = g;
     this._guide = nullpath;
+    this._label = new Label;
     this._pen = p;
     this._children = children;
   }
@@ -22,6 +25,7 @@ struct Object {
                      Object[] children = new Object[]) {
     this._path = nullpath;
     this._guide = g;
+    this._label = new Label;
     this._pen = p;
     this._children = children;
   }
@@ -49,6 +53,8 @@ struct Object {
     _guide = g;
     _path = nullpath;
   }
+  Label getLabel() { return _label; }
+  void setLabel(Label label) { _label = label; }
   pen getPen() { return _pen; }
   void setPen(pen p) { _pen = p; }
   Object[] getChildren() { return _children; }
@@ -78,12 +84,13 @@ struct Object {
   private struct Painter {
     picture pic;
     void paint(Object obj) {
+      label(pic, obj.getLabel(), obj.getPen());
       if (obj.empty())
         return;
       if (isPath())
-        filldraw(pic, obj.getPath(), obj.getPen());
+        draw(pic, obj.getPath(), obj.getPen());
       if (isGuide())
-        filldraw(pic, obj.getGuide(), obj.getPen());
+        draw(pic, obj.getGuide(), obj.getPen());
     }
   }
   void draw(picture pic = currentpicture) {
