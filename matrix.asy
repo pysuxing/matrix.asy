@@ -36,6 +36,7 @@ struct Matrix {
   private int _col;
   private pair _base;
   private Matrix[] _submatrices; // row major
+  private Label _label;
   private pen _pen;
 
 
@@ -62,15 +63,17 @@ struct Matrix {
     assert(i < _submatrices.length, 'Out of bound');
     return _submatrices[i];
   }
+  Label getLabel() { return _label; }
   // we only provide setter for _pen
   void setPen(pen p) { _pen = p; }
+  void setLabel(explicit Label l) { _label = l; }
+  void resetLabel() { _label = new Label; }
 
   // static creator functions, use these instead of constructors
   static Matrix general(explicit int row, explicit int col,
                         explicit pair base = (0, 0), explicit pen p = currentpen) {
     assert(row > 0 && col > 0, 'Invalid matrix dimension');
     Matrix m = new Matrix;
-    m._pen = p;
     m._shape = GENERAL;
     m._uplo = -1;
     m._kl = -1;
@@ -79,6 +82,8 @@ struct Matrix {
     m._col = col;
     m._base = base;
     m._submatrices = new Matrix[];
+    m._label = new Label;
+    m._pen = p;
     return m;
   }
   static Matrix square(explicit int dim, explicit pair base = (0, 0),
@@ -93,6 +98,7 @@ struct Matrix {
     m._col = dim;
     m._base = base;
     m._submatrices = new Matrix[];
+    m._label = new Label;
     m._pen = p;
     return m;
   }
@@ -126,6 +132,7 @@ struct Matrix {
     m._col = col;
     m._base = base;
     m._submatrices = new Matrix[];
+    m._label = new Label;
     m._pen = p;
     return m;
   }
@@ -145,6 +152,7 @@ struct Matrix {
     m._col = col;
     m._base = base;
     m._submatrices = new Matrix[];
+    m._label = new Label;
     m._pen = p;
     return m;
   }
@@ -164,6 +172,7 @@ struct Matrix {
   }
 
   // tile
+  void detile() { _submatrices.delete(); }
   // we only support tiling in single dimension
   private void tileRowGeneral(explicit int[] sizes) {
     assert(sizes.length > 0, 'Empty tile sizes');
@@ -356,12 +365,17 @@ struct Matrix {
     Object[] children = new Object[];
     for (int i = 0; i < _submatrices.length; ++i)
       children.push(_submatrices[i].render());
-    return Object(g, _pen, children);
+    Object obj = Object(g, _pen, children);
+    obj.setLabel(_label);
+    return obj;
   }
   void draw(picture pic = currentpicture) {
     Object obj = render();
     obj.draw(pic);
   }
+
+  // must be defined after masscenter
+  void setLabel(string l) { setLabel(Label(l, this.masscenter())); }
 }
 
 string operator cast(Matrix m) { return m.toString(); }
