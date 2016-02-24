@@ -7,11 +7,11 @@ struct MatrixShape {
   static int TRIANGULAR = 2;
   static int TRAPEZOIDAL = 3;
   static int BAND = 4;
-  static int count() { return BAND+1; }
+  static int SHAPECOUNT = 5;
   private static string[] _names = new string[] {
     'General', 'Square', 'Triangular', 'Trapezoidal', 'Band'
   };
-  static bool validate(int shape) { return GENERAL <= shape && shape < count(); }
+  static bool validate(int shape) { return GENERAL <= shape && shape < SHAPECOUNT; }
   static string getShapeName(int shape) {
     assert(validate(shape), 'Invalid shape');
     return _names[shape];
@@ -22,7 +22,12 @@ unravel MatrixShape;
 struct MatrixUplo {
   static int UP = 0;
   static int LO = 1;
-  static string[] UploName = new string[] {'up', 'lo'};
+  static string[] _names = new string[] {'up', 'lo'};
+  static bool validate(int uplo) { return uplo == UP || uplo == LO; }
+  static string getShapeName(int uplo) {
+    assert(validate(uplo), 'Invalid uplo');
+    return _names[uplo];
+  }
 }
 unravel MatrixUplo;
 
@@ -38,7 +43,6 @@ struct Matrix {
   private Matrix[] _submatrices; // row major
   private Label _label;
   private pen _pen;
-
 
   // predicates
   bool isGeneral() { return _shape == GENERAL; }
@@ -57,6 +61,7 @@ struct Matrix {
   int getRow() { return _row; }
   int getCol() { return _col; }
   pen getPen() { return _pen; }
+  void setPen(pen p) { _pen = p; }
   pair getBase() { return _base; }
   Matrix[] getSubMatrices() { return _submatrices; }
   Matrix getSubMatrix(int i) {
@@ -64,8 +69,6 @@ struct Matrix {
     return _submatrices[i];
   }
   Label getLabel() { return _label; }
-  // we only provide setter for _pen
-  void setPen(pen p) { _pen = p; }
   void setLabel(explicit Label l) { _label = l; }
   void resetLabel() { _label = new Label; }
 
