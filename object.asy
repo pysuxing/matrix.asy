@@ -3,7 +3,8 @@ struct Object {
   private path _path;
   private guide _guide;
   private Label _label;
-  private pen _pen;
+  private pen _drawpen;
+  private pen _fillpen;
   private Object[] _children;
 
   // constructors
@@ -11,32 +12,28 @@ struct Object {
     this._path = nullpath;
     this._guide = nullpath;
     this._label = new Label;
-    this._pen = defaultpen;
+    this._drawpen = defaultpen;
+    this._fillpen = nullpen;
     this._children = new Object[];
   }
-  void operator init(explicit path g, pen p = defaultpen,
+  void operator init(explicit path g, pen dp = defaultpen, pen fp = nullpen,
                      Object[] children = new Object[]) {
     this._path = g;
     this._guide = nullpath;
     this._label = new Label;
-    this._pen = p;
+    this._drawpen = dp;
+    this._fillpen = fp;
     this._children = children;
   }
-  void operator init(explicit guide g, pen p = defaultpen,
+  void operator init(explicit guide g, pen dp = defaultpen, pen fp = nullpen,
                      Object[] children = new Object[]) {
     this._path = nullpath;
     this._guide = g;
     this._label = new Label;
-    this._pen = p;
+    this._drawpen = dp;
+    this._fillpen = fp;
     this._children = children;
   }
-  // void operator init(explicit object obj) {
-  //   this._path = obj.getPath();
-  //   this._guide = obj.getGuide();
-  //   this._label = obj.getLabel();
-  //   this._pen = obj.getPen();
-  //   this._children = obj.getChildren();
-  // }
   // predicates
   bool empty() { return (_path == nullpath) && (_guide == nullpath); }
   bool isPath() { return (_path != nullpath) && (_guide == nullpath); }
@@ -49,8 +46,10 @@ struct Object {
   void setGuide(explicit guide g) { _guide = g; _path = nullpath; }
   Label getLabel() { return _label; }
   void setLabel(Label label) { _label = label; }
-  pen getPen() { return _pen; }
-  void setPen(pen p) { _pen = p; }
+  pen getDrawpen() { return _drawpen; }
+  void setDrawpen(pen p) { _drawpen = p; }
+  pen getFillpen() { return _fillpen; }
+  void setFillpen(pen p) { _fillpen = p; }
   Object[] getChildren() { return _children; }
   void setChildren(explicit Object child) {
     _children.delete();
@@ -79,13 +78,13 @@ struct Object {
   private struct Painter {
     picture pic;
     void paint(Object obj) {
-      label(pic, obj.getLabel(), obj.getPen());
+      label(pic, obj.getLabel(), obj.getDrawpen());
       if (obj.empty())
         return;
       if (isPath())
-        draw(pic, obj.getPath(), obj.getPen());
+        filldraw(pic, obj.getPath(), obj.getFillpen(), obj.getDrawpen());
       if (isGuide())
-        draw(pic, obj.getGuide(), obj.getPen());
+        filldraw(pic, obj.getGuide(), obj.getFillpen(), obj.getDrawpen());
     }
   }
   void draw(picture pic = currentpicture) {
@@ -116,7 +115,8 @@ Object operator *(transform trans, Object obj) {
   Object ret = new Object;
   ret.setPath(trans*obj.getPath());
   ret.setLabel(trans*obj.getLabel());
-  ret.setPen(obj.getPen());
+  ret.setDrawpen(obj.getDrawpen());
+  ret.setFillpen(obj.getFillpen());
   ret.setChildren(children);
   return ret;
 }

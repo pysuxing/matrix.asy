@@ -42,8 +42,9 @@ struct Matrix {
   private pair _base;
   private Matrix[] _submatrices; // row major
   private Label _label;
-  private pen _pen;
-
+  private pen _drawpen;
+  private pen _fillpen;
+  
   // predicates
   bool isGeneral() { return _shape == GENERAL; }
   bool isSquare() { return _shape == SQUARE; }
@@ -60,8 +61,10 @@ struct Matrix {
   int getSuperWidth() { return _ku; }
   int getRow() { return _row; }
   int getCol() { return _col; }
-  pen getPen() { return _pen; }
-  void setPen(pen p) { _pen = p; }
+  pen getDrawpen() { return _drawpen; }
+  void setDrawpen(pen p) { _drawpen = p; }
+  pen getFillpen() { return _fillpen; }
+  void setFillpen(pen p) { _fillpen = p; }
   pair getBase() { return _base; }
   Matrix[] getSubMatrices() { return _submatrices; }
   Matrix getSubMatrix(int i) {
@@ -73,8 +76,8 @@ struct Matrix {
   void resetLabel() { _label = new Label; }
 
   // static creator functions, use these instead of constructors
-  static Matrix general(explicit int row, explicit int col,
-                        explicit pair base = (0, 0), explicit pen p = currentpen) {
+  static Matrix general(explicit int row, explicit int col, explicit pair base = (0, 0),
+                        explicit pen dp = currentpen, explicit pen fp = nullpen) {
     assert(row > 0 && col > 0, 'Invalid matrix dimension');
     Matrix m = new Matrix;
     m._shape = GENERAL;
@@ -86,11 +89,12 @@ struct Matrix {
     m._base = base;
     m._submatrices = new Matrix[];
     m._label = new Label;
-    m._pen = p;
+    m._drawpen = dp;
+    m._fillpen = fp;
     return m;
   }
   static Matrix square(explicit int dim, explicit pair base = (0, 0),
-                       explicit pen p = currentpen) {
+                       explicit pen dp = currentpen, explicit pen fp = nullpen) {
     assert(dim > 0, 'Invalid matrix dimension');
     Matrix m = new Matrix;
     m._shape = SQUARE;
@@ -102,11 +106,12 @@ struct Matrix {
     m._base = base;
     m._submatrices = new Matrix[];
     m._label = new Label;
-    m._pen = p;
+    m._drawpen = dp;
+    m._fillpen = fp;
     return m;
   }
-  static Matrix triangular(explicit int dim, explicit int uplo,
-                           explicit pair base = (0, 0), explicit pen p = currentpen) {
+  static Matrix triangular(explicit int dim, explicit int uplo, explicit pair base = (0, 0),
+                           explicit pen dp = currentpen, explicit pen fp = nullpen) {
     assert(dim > 0, 'Invalid matrix dimension');
     assert(uplo == UP || uplo == LO, 'Invalid matrix uplo');
     Matrix m = new Matrix;
@@ -118,12 +123,13 @@ struct Matrix {
     m._col = dim;
     m._base = base;
     m._submatrices = new Matrix[];
-    m._pen = p;
+    m._drawpen = dp;
+    m._fillpen = fp;
     return m;
   }
   static Matrix trapezoidal(explicit int row, explicit int col,
                             explicit int uplo, explicit pair base = (0, 0),
-                            explicit pen p = currentpen) {
+                            explicit pen dp = currentpen, explicit pen fp = nullpen) {
     assert(row > 0 && col > 0, 'Invalid matrix dimension');
     assert(uplo == UP || uplo == LO, 'Invalid matrix uplo');
     Matrix m = new Matrix;
@@ -136,13 +142,14 @@ struct Matrix {
     m._base = base;
     m._submatrices = new Matrix[];
     m._label = new Label;
-    m._pen = p;
+    m._drawpen = dp;
+    m._fillpen = fp;
     return m;
   }
   static Matrix band(explicit int row, explicit int col,
                      explicit int uplo, explicit int kl,
                      explicit int ku, explicit pair base = (0, 0),
-                     explicit pen p = currentpen) {
+                     explicit pen dp = currentpen, explicit pen fp = nullpen) {
     assert(row > 0 && col > 0, 'Invalid matrix dimension');
     assert(uplo == UP || uplo == LO, 'Invalid matrix uplo');
     assert(ku >= 0 && kl >= 0, 'Invalid band width');
@@ -156,7 +163,8 @@ struct Matrix {
     m._base = base;
     m._submatrices = new Matrix[];
     m._label = new Label;
-    m._pen = p;
+    m._drawpen = dp;
+    m._fillpen = fp;
     return m;
   }
 
@@ -185,7 +193,7 @@ struct Matrix {
     real rbase = _base.y, cbase = _base.x;
     for (int i = 0; i < sizes.length; ++i) {
       int size = sizes[i];
-      Matrix m = Matrix.general(size, _col, (cbase, rbase), _pen);
+      Matrix m = Matrix.general(size, _col, (cbase, rbase), _drawpen, _fillpen);
       _submatrices[i] = m;
       rbase -= size;
     }
@@ -198,7 +206,7 @@ struct Matrix {
     real rbase = _base.y, cbase = _base.x;
     for (int i = 0; i < sizes.length; ++i) {
       int size = sizes[i];
-      Matrix m = Matrix.general(_row, size, (cbase, rbase), _pen);
+      Matrix m = Matrix.general(_row, size, (cbase, rbase), _drawpen, _fillpen);
       _submatrices[i] = m;
       cbase += size;
     }
@@ -211,7 +219,7 @@ struct Matrix {
     real rbase = _base.y, cbase = _base.x;
     int i = 0;
     for (int r = 0; r < _row; r += size) {
-      Matrix m = Matrix.general(min(size, _row-r), _col, (cbase, rbase-r), _pen);
+      Matrix m = Matrix.general(min(size, _row-r), _col, (cbase, rbase-r), _drawpen, _fillpen);
       _submatrices[i] = m;
       ++i;
     }
@@ -224,7 +232,7 @@ struct Matrix {
     real rbase = _base.y, cbase = _base.x;
     int i = 0;
     for (int c = 0; c < _col; c += size) {
-      Matrix m = Matrix.general(_row, min(size, _col-c), (cbase+c, rbase), _pen);
+      Matrix m = Matrix.general(_row, min(size, _col-c), (cbase+c, rbase), _drawpen, _fillpen);
       _submatrices[i] = m;
       ++i;
     }
@@ -273,8 +281,8 @@ struct Matrix {
 
   private void tileDiagonalSquare() {
     _submatrices = new Matrix[2];
-    _submatrices[0] = Matrix.triangular(_row, LO, _base, _pen);
-    _submatrices[1] = Matrix.triangular(_row, UP, _base, _pen);
+    _submatrices[0] = Matrix.triangular(_row, LO, _base, _drawpen, _fillpen);
+    _submatrices[1] = Matrix.triangular(_row, UP, _base, _drawpen, _fillpen);
   }
   private void tileDiagonalGeneral() {
     if (_row == _col) {
@@ -283,12 +291,12 @@ struct Matrix {
       return;
     } else if (_row < _col) {
       _submatrices = new Matrix[2];
-      _submatrices[0] = Matrix.triangular(_row, LO, _base, _pen);
-      _submatrices[1] = Matrix.trapezoidal(_row, _col, UP, _base, _pen);
+      _submatrices[0] = Matrix.triangular(_row, LO, _base, _drawpen, _fillpen);
+      _submatrices[1] = Matrix.trapezoidal(_row, _col, UP, _base, _drawpen, _fillpen);
     } else {
       _submatrices = new Matrix[2];
-      _submatrices[0] = Matrix.trapezoidal(_row, _col, LO, _base, _pen);
-      _submatrices[1] = Matrix.triangular(_col, UP, _base, _pen);
+      _submatrices[0] = Matrix.trapezoidal(_row, _col, LO, _base, _drawpen, _fillpen);
+      _submatrices[1] = Matrix.triangular(_col, UP, _base, _drawpen, _fillpen);
     }
   }
   void tileDiagonal() {
@@ -368,7 +376,7 @@ struct Matrix {
     Object[] children = new Object[];
     for (int i = 0; i < _submatrices.length; ++i)
       children.push(_submatrices[i].render());
-    Object obj = Object(g, _pen, children);
+    Object obj = Object(g, _drawpen, _fillpen, children);
     obj.setLabel(_label);
     return obj;
   }
